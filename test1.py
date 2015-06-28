@@ -37,21 +37,31 @@ class cardClass:
                 else:
                     self.position.append((x,y))
         random.shuffle(self.position)
+        self.card = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
 
     def newImage(self, filenameImage):
         index=len(self.images)
         x, y  = self.position[index]
         percentageSize = 100
-        image = imageInCardClass(filenameImage, x, y )
+        image = imageInCardClass(filenameImage, x*self.widthSpace , y*self.widthSpace)
         self.images.append(image)
+
+    def full_card(self):
+        with Image(width=self.width, height=self.height) as img:
+            for index in range(0, len(self.images)):
+                with Image(filename=self.images[index].filenameImage) as partImg:
+                    img.composite(partImg, self.images[index].x , self.images[index].y)
+            img.save(filename=self.card.name)
+        print("Card: ", self.card.name)
+        
 
     def thumbnail(self):
         thumbnail = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
         thumbnailParts = []
         blob = None
         pixels = []
-        partX = self.thumbWidth/3
-        partY = self.thumbWidth/3
+        partX = self.width/self.thumbWidth
+        partY = self.height/self.thumbHeight
         for index in range(0, len(self.images)):
             part = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
             with Image(filename=self.images[index].filenameImage) as img:
@@ -62,7 +72,7 @@ class cardClass:
         with Image(width=self.thumbWidth, height=self.thumbHeight) as img:
             for index in range(0, len(self.images)):
                 with Image(filename=thumbnailParts[index]) as partImg:
-                    img.composite(partImg, self.images[index].x * partX, self.images[index].y * partY)
+                    img.composite(partImg, self.images[index].x / partX, self.images[index].y / partY)
             img.resize(self.inspectWidth, self.inspectHeight)
             img.save(filename=thumbnail.name)
             self.inspectName = thumbnail.name
@@ -75,16 +85,25 @@ class cardClass:
             p = binascii.b2a_hex((blob[cursor] + blob[cursor + 1] + blob[cursor + 2]))
             pixels.append(p)
         index = 0
+        lastPixel = '000000'
+        clash = False
+        # Scan accross
         for x in range(0, self.inspectWidth):
+            lastPixel = '000000'
             l = ""
             for y in range(0, self.inspectHeight):
                if pixels[index] == '000000':
                    l = l + "0"
+                   lastPixel = '000000'
                else:
                    l = l + "1"
+                   if lastPixel != '000000':
+                       if pixels[index] != lastPixel:
+                           clash = True
+                   lastPixel = pixels[index]
                index = index + 1
             print l
-
+        print("Clash :", clash)
 
 #        print("Composite", thumbnail.name)
 
@@ -92,8 +111,13 @@ class cardClass:
 
 
 def random_colour_text():
-    colours = ['red', 'Maroon', 'Yellow', 'Olive', 'Lime', 'Green', 'Aqua', 'Teal', 'Purple']
-    return(random.choice(colours))
+#    colours = ['red', 'Maroon', 'Yellow', 'Olive', 'Lime', 'Green', 'Aqua', 'Teal', 'Purple']
+#    return(random.choice(colours))
+    r = random.randrange(0, 255, 1)
+    g = random.randrange(0, 255, 1)
+    b = random.randrange(0, 255, 1)
+    colour = 'rgb(' + str(r) + ',' + str(g) + ',' + str(b) + ')'
+    return(colour)
 
 def random_font_path_text():
     fonts = ['LiberationMono-BoldItalic.ttf', 'LiberationSansNarrow-Bold.ttf', 
@@ -128,6 +152,7 @@ def place_images_in_big_grid(images):
     for image in images:
         card.newImage(image)
     card.thumbnail()
+    card.full_card()
  
  
 if __name__ == "__main__":
