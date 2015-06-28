@@ -4,7 +4,8 @@ from wand.image import Font
 from wand.color import Color
 from wand.display import display
 
-import random, tempfile
+import random, tempfile, binascii
+
 
 
 class imageInCardClass:
@@ -21,9 +22,14 @@ class cardClass:
         self.images = []
         self.width=9000
         self.height=9000
+        self.thumbWidth = 300
+        self.thumbHeight = 300
+        self.inspectWidth = 64
+        self.inspectHeight = 64
         self.position = []
         self.widthSpace = self.width/3
         self.heightSpace = self.height/3
+        self.inspectName = ''
         for x in range(0,3):
             for y in range(0,3):
                 if x == 1 and y == 1:
@@ -31,7 +37,6 @@ class cardClass:
                 else:
                     self.position.append((x,y))
         random.shuffle(self.position)
-        print(self.position)
 
     def newImage(self, filenameImage):
         index=len(self.images)
@@ -40,25 +45,48 @@ class cardClass:
         image = imageInCardClass(filenameImage, x, y )
         self.images.append(image)
 
-    def thumbnail(self, x = 300, y = 300):
+    def thumbnail(self):
         thumbnail = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
         thumbnailParts = []
-        partX = x/3
-        partY = y/3
+        blob = None
+        pixels = []
+        partX = self.thumbWidth/3
+        partY = self.thumbWidth/3
         for index in range(0, len(self.images)):
             part = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
             with Image(filename=self.images[index].filenameImage) as img:
-                img.resize(partX,partY)
+                img.resize((partX*self.images[index].percentageSize)/100,(partY*self.images[index].percentageSize)/100)
                 thumbnailParts.append(part.name)
                 img.save(filename=part.name)
         print("Thumbs", thumbnailParts)
-        with Image(width=x, height=y) as img:
+        with Image(width=self.thumbWidth, height=self.thumbHeight) as img:
             for index in range(0, len(self.images)):
                 with Image(filename=thumbnailParts[index]) as partImg:
-#                img.composite(thumbnailParts[index], left=self.images[index].x * partX, top=self.images[index].y * partY)
                     img.composite(partImg, self.images[index].x * partX, self.images[index].y * partY)
+            img.resize(self.inspectWidth, self.inspectHeight)
             img.save(filename=thumbnail.name)
-        print("Composite", thumbnail.name)
+            self.inspectName = thumbnail.name
+            img.depth = 8
+            blob = img.make_blob(format='RGB')
+
+        # Iterate over blob and collect pixels
+        for cursor in range(0, self.inspectWidth * self.inspectHeight * 3, 3):
+            # Save tuple of color values
+            p = binascii.b2a_hex((blob[cursor] + blob[cursor + 1] + blob[cursor + 2]))
+            pixels.append(p)
+        index = 0
+        for x in range(0, self.inspectWidth):
+            l = ""
+            for y in range(0, self.inspectHeight):
+               if pixels[index] == '000000':
+                   l = l + "0"
+               else:
+                   l = l + "1"
+               index = index + 1
+            print l
+
+
+#        print("Composite", thumbnail.name)
 
 
 
