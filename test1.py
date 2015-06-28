@@ -2,6 +2,8 @@ from wand.image import Image
 from wand.drawing import Drawing
 from wand.image import Font
 from wand.color import Color
+from wand.display import display
+
 import random, tempfile
 
 
@@ -27,7 +29,7 @@ class cardClass:
                 if x == 1 and y == 1:
                     pass # not the centre
                 else:
-                    self.position.append((x*self.widthSpace,y*self.heightSpace))
+                    self.position.append((x,y))
         random.shuffle(self.position)
         print(self.position)
 
@@ -50,6 +52,13 @@ class cardClass:
                 thumbnailParts.append(part.name)
                 img.save(filename=part.name)
         print("Thumbs", thumbnailParts)
+        with Image(width=x, height=y) as img:
+            for index in range(0, len(self.images)):
+                with Image(filename=thumbnailParts[index]) as partImg:
+#                img.composite(thumbnailParts[index], left=self.images[index].x * partX, top=self.images[index].y * partY)
+                    img.composite(partImg, self.images[index].x * partX, self.images[index].y * partY)
+            img.save(filename=thumbnail.name)
+        print("Composite", thumbnail.name)
 
 
 
