@@ -6,13 +6,15 @@ from wand.display import display
 
 import random, tempfile, binascii
 
+import time
+
 class CardPosition:
     def __init__(self, position, thumb_filename, thumb_width):
         x, y  = position
         self.x = x * thumb_width
         self.y = y * thumb_width
         self.rotate = random.randrange(0, 360, 5)
-        self.percentageSize = random.randrange(50, 95, 5)
+        self.percentageSize = random.randrange(20, 90, 10)
         self.thumb = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
         with Image(filename=thumb_filename) as img:
             with img[:, :] as duplicate:
@@ -141,8 +143,9 @@ class Pack:
                 self.card_positions[index].y = self.card_positions[index].y + inc
             if (self.inspect_card_positions()):
                 # We have a clash with this move - revert
-                self.card_positions[index].x = tmp_card_positions[index].x
-                self.card_positions[index].y = tmp_card_positions[index].y
+                self.card_positions[index].x = x
+                self.card_positions[index].y = y
+                print("REVERT")
             else:
                 movement = True
         print("Movement :", movement)
@@ -150,11 +153,14 @@ class Pack:
 
 
 if __name__ == "__main__":
-    i = ['/tmp/icons/anchor.png', '/tmp/icons/arrow.png', '/tmp/icons/circle.png']
+    i = ['/tmp/icons/anchor.png', '/tmp/icons/arrow.png', '/tmp/icons/circle.png', '/tmp/icons/triangle.png', '/tmp/icons/mouse.png']
     pack = Pack(i) 
     print(pack.images_filenames_list)
-    card_positions = pack.make_card([0,1,2])
+    card_positions = pack.make_card([0,1,2,3,4])
     pack.inspect_card_positions()
+    interactions = 0
     while(pack.move_closer()):
-        pass
+        interactions = interactions +1
+    pack.inspect_card_positions()
+    print(interactions)
 
