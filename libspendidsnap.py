@@ -13,15 +13,32 @@ class CardPosition:
         x, y  = position
         self.x = x * thumb_width
         self.y = y * thumb_width
+        self.thumb_width = thumb_width
         self.rotate = random.randrange(0, 360, 5)
         self.percentageSize = random.randrange(20, 90, 10)
         self.thumb = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+        self.thumb_as_list = []
         with Image(filename=thumb_filename) as img:
             with img[:, :] as duplicate:
                 duplicate.rotate(self.rotate)
+                duplicate.transform(resize=str(thumb_width)) # make sure still width s
                 duplicate.transform(resize=str(self.percentageSize)+'%')
-                duplicate.save(filename=self.thumb.name)
-        print("Card pos: ", self.thumb.name)
+#                duplicate.save(filename=self.thumb.name)
+                # Using blob make in to a list of background vs image, 
+                #  using 1 as some colour
+                duplicate.depth = 8
+                blob = duplicate.make_blob(format='RGB')
+                print(duplicate.width, duplicate.height)
+                for cursor in range(0, len(blob), 3):
+                    if ((blob[cursor] + blob[cursor + 1] + blob[cursor + 2]) == '\x00\x00\x00'):
+                        self.thumb_as_list.append(0)
+                    else:
+                        self.thumb_as_list.append(1)
+
+                self.thumb_width = duplicate.width # Newe resized width
+        print("Card positions ", self.x, self.y)
+    def thumb_at_x_y(self, x, y):
+        return(self.thumb_as_list[(x*self.thumb_width)+y])
 
 
 class Pack:
@@ -40,18 +57,18 @@ class Pack:
             with Image(width=self.standard_width, height=self.standard_width) as img:
                 with Image(filename=images_filename) as master_img:
                     if master_img.width > master_img.height:
-                        master_img.transform(resize=self.standard_width)
+                        master_img.transform(resize=str(self.standard_width))
                     else:
                         master_img.transform(resize='x' + str(self.standard_width))
                     img.composite(master_img, 0, 0)
                 img.save(filename=filename_copied.name)
-                # Thumbs
                 if img.width > img.height:
-                    img.transform(resize=self.thumb_width)
+                    img.transform(resize=str(self.thumb_width))
                 else:
                     img.transform(resize='x' + str(self.thumb_width))
                 img.save(filename=filename_copied.name + self.thumb_ext)
             self.images_filenames_list.append(filename_copied.name)
+
     def make_card(self, image_index_list):
         position = []
         for x in range(0,3):
@@ -61,71 +78,43 @@ class Pack:
                 else:
                     position.append((x,y))
         random.shuffle(position)
-        card_positions = []
+        self.card_positions = []
         for index in image_index_list:
             card_position = CardPosition(position[index], 
                                          self.images_filenames_list[index]+self.thumb_ext, 
                                          self.thumb_width)
-            card_positions.append(card_position)
-        self.card_positions = card_positions
-        return card_positions
+            self.card_positions.append(card_position)
+
     def inspect_card_positions(self):
-        thumbnail = tempfile.NamedTemporaryFile(delete=False, suffix="___.png")
-        blob = None
-        pixels = []
-        with Image(width=self.thumb_width*3, height=self.thumb_width*3) as img:
-            for card_position in self.card_positions:
-                with Image(filename=card_position.thumb.name) as overlay:
-                    img.composite(overlay, card_position.x, card_position.y)
-            img.save(filename=thumbnail.name)
-            img.depth = 8
-            blob = img.make_blob(format='RGB')
-        # Iterate over blob and collect pixels
-        for cursor in range(0, (self.thumb_width*3) * (self.thumb_width*3) * 3, 3):
-            # Save tuple of color values
-            p = binascii.b2a_hex((blob[cursor] + blob[cursor + 1] + blob[cursor + 2]))
-            pixels.append(p)
-        index = 0
-        lastPixel = '000000'
+#        self.thumb_width
+        inspect_canvas = []
+        # Canvas is three times bigger than thumb
+        inspect_width = self.thumb_width*3
         clash = False
-        # Scan accross
-        for x in range(0, self.thumb_width*3):
-            lastPixel = '000000'
-            l = ""
-            for y in range(0, self.thumb_width*3):
-               if pixels[index] == '000000':
-                   l = l + "0"
-                   lastPixel = '000000'
-               else:
-                   l = l + "1"
-                   if lastPixel != '000000':
-                       if pixels[index] != lastPixel:
-                           clash = True
-                   lastPixel = pixels[index]
-               index = index + 1
-            if self.debug:
-                print l
-        if self.debug:
-            print("Clash :", clash, thumbnail)
-
-        # Up down
-        index = 0
-        lastPixel = '000000'
-        for y in range(0, self.thumb_width*3):
-            lastPixel = '000000'
-            for x in range(0, self.thumb_width*3):
-               if pixels[index] == '000000':
-                   lastPixel = '000000'
-               else:
-                   if lastPixel != '000000':
-                       if pixels[index] != lastPixel:
-                           clash = True
-                   lastPixel = pixels[index]
-               index = index + 1
-        if self.debug:
-            print("Clash :", clash, thumbnail.name)
+        for x in range(0, inspect_width):
+            for y in range(0, inspect_width):
+                inspect_canvas.append(0)
+        for card_position in self.card_positions:
+            pos_x_on_canvas = card_position.x 
+            pos_y_on_canvas = card_position.y
+            print pos_x_on_canvas, pos_y_on_canvas, card_position.thumb_width
+            for x in range(0, card_position.thumb_width):
+                for y in range(0, card_position.thumb_width):
+                    pixel = card_position.thumb_at_x_y(x,y)
+                    inspect_x = pos_x_on_canvas + x
+                    inspect_y = pos_y_on_canvas + y
+                    #print inspect_x, inspect_y
+                    inspect_canvas[(inspect_x * inspect_width) + inspect_y] = inspect_canvas[(inspect_x * inspect_width) + inspect_y] + pixel
+                    if inspect_canvas[(inspect_x * inspect_width) + inspect_y] > 1:
+                        clash = True
+        if (True):
+            for x in range(0, inspect_width):
+                g = ""
+                for y in range(0, inspect_width):
+                    g = g + str(inspect_canvas[(x * inspect_width) + y])
+                print(g)
+        print("clash :", clash)
         return clash
-
     def move_closer(self):
         movement = False # No movements
         tmp_card_positions = self.card_positions
@@ -151,16 +140,43 @@ class Pack:
         print("Movement :", movement)
         return movement
 
+	
+
+#http://stackoverflow.com/questions/6240113/what-are-the-mathematical-computational-principles-behind-this-game
+def simple_card_list(p):
+    cards = []
+    for i in range(p):
+        pictures=[]
+        for j in range(p):
+            pictures.append(i * p + j)
+        pictures.append(p*p)
+        cards.append(pictures)
+    for i in range(p):
+        for j in range(p):
+            pictures=[]
+            for k in range(p):
+                pictures.append(k * p + (j + i * k) % p)
+            pictures.append(p * p + 1 + i)
+            cards.append(pictures)
+     
+    pictures=[]
+    for i in range(p+1):
+        pictures.append(p * p + i)
+    cards.append(pictures)
+    return cards
+
+
+
 
 if __name__ == "__main__":
-    i = ['/tmp/icons/anchor.png', '/tmp/icons/arrow.png', '/tmp/icons/circle.png', '/tmp/icons/triangle.png', '/tmp/icons/mouse.png']
+    i = ['/tmp/icons/SplendidSnap.png', '/tmp/icons/anchor.png', '/tmp/icons/arrow.png', '/tmp/icons/circle.png', '/tmp/icons/triangle.png', '/tmp/icons/mouse.png']
     pack = Pack(i) 
     print(pack.images_filenames_list)
     card_positions = pack.make_card([0,1,2,3,4])
     pack.inspect_card_positions()
     interactions = 0
-    while(pack.move_closer()):
+    while(pack.move_closer() and interactions < 20):
         interactions = interactions +1
     pack.inspect_card_positions()
     print(interactions)
-
+    print(simple_card_list(4))
