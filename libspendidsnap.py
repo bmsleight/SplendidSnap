@@ -16,16 +16,16 @@ class CardPosition:
         self.thumb_width = thumb_width
         self.rotate = random.randrange(0, 360, 5)
 #        self.percentageSize = random.randrange(20, 90, 10)
-        self.percentageSize = random.choice([5,10,15,30,60,90])
-        self.thumb = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+        self.percentageSize = random.choice([45,60,75,80,85])
+        self.thumb = tempfile.NamedTemporaryFile(delete=True, suffix=".png")
         self.thumb_as_list = []
         with Image(filename=thumb_filename) as img:
             with img[:, :] as duplicate:
                 duplicate.rotate(self.rotate)
                 duplicate.transform(resize=str(thumb_width)) # make sure still width s
                 # + 5% to give space between images
-                duplicate.transform(resize=str(self.percentageSize + 2.5)+'%')
-#                duplicate.save(filename=self.thumb.name)
+                duplicate.transform(resize=str(self.percentageSize+15)+'%')
+
                 # Using blob make in to a list of background vs image, 
                 #  using 1 as some colour
                 duplicate.depth = 8
@@ -35,6 +35,8 @@ class CardPosition:
                         self.thumb_as_list.append(0)
                     else:
                         self.thumb_as_list.append(1)
+#                if (True):
+
 
                 self.thumb_width = duplicate.width # Newe resized width
 #        print("Card positions ", self.x, self.y)
@@ -90,8 +92,9 @@ class Pack:
             p = p + 1
         #Squeeze them together 
         interactions = 0
-        while(self.move_closer() and interactions < 20):
+        while(self.move_closer() and interactions < 150):
             interactions = interactions +1
+        print interactions
         self.inspect_card_positions(display = True)
         with Image(width=self.card_width, height=self.card_width) as img:
             final_card = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
@@ -109,11 +112,17 @@ class Pack:
                      img.composite(overlay, x, y)
                  card_index = card_index + 1
             img.trim()
-            if img.width > img.height:
-                img.transform(resize=str(self.card_width))
-            else:
-                img.transform(resize='x' + str(self.card_width))      
-            img.save(filename=final_card.name)
+            with Image(width=self.card_width, height=self.card_width) as final_img:
+                if img.width > img.height:
+                    img.transform(resize=str(self.card_width))
+                    final_img.composite(img, 0, (self.card_width - img.height)/2)
+                    print(self.card_width - img.height, " ..")
+                else:
+                    img.transform(resize='x' + str(self.card_width))      
+                    final_img.composite(img, (self.card_width - img.width)/2, 0)            
+                    print(self.card_width - img.width)
+                final_img.save(filename=final_card.name)
+
             self.cards.append(final_card.name)
             print("Final card: ", final_card.name)
 
@@ -135,7 +144,7 @@ class Pack:
                     pixel = card_position.thumb_at_x_y(x,y)
                     inspect_x = pos_x_on_canvas + x
                     inspect_y = pos_y_on_canvas + y
-                    #print inspect_x, inspect_y
+#                    print inspect_x, inspect_y,x, y 
                     inspect_canvas[(inspect_x * inspect_width) + inspect_y] = inspect_canvas[(inspect_x * inspect_width) + inspect_y] + pixel
                     if inspect_canvas[(inspect_x * inspect_width) + inspect_y] > 1:
                         clash = True
@@ -150,6 +159,7 @@ class Pack:
         movement = False # No movements
         tmp_card_positions = self.card_positions
         inc = self.thumb_width / 10
+#        inc = 1
         for index in range(0, len(self.card_positions)):
             x = self.card_positions[index].x
             if x > (self.thumb_width * 1.5):
@@ -206,11 +216,18 @@ def simple_card_list(p):
 
 
 if __name__ == "__main__":
-    print(simple_card_list(4))
-    i = ['/tmp/icons/SplendidSnap.png', '/tmp/icons/anchor.png', '/tmp/icons/arrow.png', '/tmp/icons/circle.png', '/tmp/icons/triangle.png', '/tmp/icons/mouse.png']
-    pack = Pack(i) 
+ 
+    ii = ['/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Whale.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Raccoon.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Rhino.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Frog.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Penguin.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Koala.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Horse.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Snail.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Wolf.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Monkey.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Bee.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Bear.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Crocodile.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Lobster.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Kangaroo.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Mouse.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Goat.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Dolphin.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Octopus.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Rabbit.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Sheep.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Cat.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Elephant.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Beaver.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Bull.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Shark.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Chicken.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Crab.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Owl.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Gorilla.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Bat.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Hippo.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Pig.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Tuna.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Lion.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Cow.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Eagle.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Duck.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Snake.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Tiger.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Dog.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Deer.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Seal.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Squirrel.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Giraffe.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Turtle.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Rat.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Swan.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Lizard.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Fish.png']
+
+    i = ['/tmp/icons/SplendidSnap.png', '/tmp/icons/anchor.png', '/tmp/icons/arrow.png', '/tmp/icons/circle.png', '/tmp/icons/triangle.png', '/tmp/icons/mouse.png', '/tmp/icons/dice.png']
+    pack = Pack(ii) 
     print(pack.images_filenames_list)
-    card_positions = pack.make_card([0,1,2,3,4])
-    pack.inspect_card_positions()
+#    card_positions = pack.make_card([0,1,2,3,4,5,6])
+    arrangements = simple_card_list(6)[16:24]
+    for arrangement in arrangements:
+        pack.make_card(arrangement)
+    print arrangements
+    print pack.cards
+#    pack.inspect_card_positions()
 
 
