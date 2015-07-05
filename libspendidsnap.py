@@ -14,9 +14,10 @@ class CardPosition:
         self.x = x * thumb_width
         self.y = y * thumb_width
         self.thumb_width = thumb_width
+        self.thumb_height = thumb_width
         self.rotate = random.randrange(0, 360, 5)
 #        self.percentageSize = random.randrange(20, 90, 10)
-        self.percentageSize = random.choice([45,60,75,80,85])
+        self.percentageSize = random.choice([30,45,60,70,75,80,85])
         self.thumb = tempfile.NamedTemporaryFile(delete=True, suffix=".png")
         self.thumb_as_list = []
         with Image(filename=thumb_filename) as img:
@@ -24,21 +25,10 @@ class CardPosition:
                 duplicate.rotate(self.rotate)
                 duplicate.transform(resize=str(thumb_width)) # make sure still width s
                 # + 5% to give space between images
-                duplicate.transform(resize=str(self.percentageSize+15)+'%')
-
-                # Using blob make in to a list of background vs image, 
-                #  using 1 as some colour
-                duplicate.depth = 8
-                blob = duplicate.make_blob(format='RGB')
-                for cursor in range(0, len(blob), 3):
-                    if ((blob[cursor] + blob[cursor + 1] + blob[cursor + 2]) == '\x00\x00\x00'):
-                        self.thumb_as_list.append(0)
-                    else:
-                        self.thumb_as_list.append(1)
-#                if (True):
-
-
+                duplicate.transform(resize=str(self.percentageSize+10)+'%')
+                duplicate.trim()
                 self.thumb_width = duplicate.width # Newe resized width
+                self.thumb_height = duplicate.height # Newe resized width
 #        print("Card positions ", self.x, self.y)
     def thumb_at_x_y(self, x, y):
         return(self.thumb_as_list[(x*self.thumb_width)+y])
@@ -46,7 +36,7 @@ class CardPosition:
 
 class Pack:
     def __init__(self, images_filenames_list):
-        self.standard_width = 600
+        self.standard_width = 300
         self.thumb_width = 30
         self.thumb_ratio = self.standard_width / self.thumb_width
         self.card_width = self.standard_width * 3
@@ -138,13 +128,12 @@ class Pack:
         for card_position in self.card_positions:
             pos_x_on_canvas = card_position.x 
             pos_y_on_canvas = card_position.y
-#            print pos_x_on_canvas, pos_y_on_canvas, card_position.thumb_width
+
             for x in range(0, card_position.thumb_width):
-                for y in range(0, card_position.thumb_width):
-                    pixel = card_position.thumb_at_x_y(x,y)
+                for y in range(0, card_position.thumb_height):
+                    pixel = 1
                     inspect_x = pos_x_on_canvas + x
                     inspect_y = pos_y_on_canvas + y
-#                    print inspect_x, inspect_y,x, y 
                     inspect_canvas[(inspect_x * inspect_width) + inspect_y] = inspect_canvas[(inspect_x * inspect_width) + inspect_y] + pixel
                     if inspect_canvas[(inspect_x * inspect_width) + inspect_y] > 1:
                         clash = True
@@ -213,17 +202,56 @@ def simple_card_list(p):
     return cards
 
 
+def random_colour_text():
+#    colours = ['red', 'Maroon', 'Yellow', 'Olive', 'Lime', 'Green', 'Aqua', 'Teal', 'Purple']
+#    return(random.choice(colours))
+    r = random.randrange(0, 255, 1)
+    g = random.randrange(0, 255, 1)
+    b = random.randrange(0, 255, 1)
+    colour = 'rgb(' + str(r) + ',' + str(g) + ',' + str(b) + ')'
+    return(colour)
+
+def random_font_path_text():
+    fonts = ['LiberationMono-BoldItalic.ttf', 'LiberationSansNarrow-Bold.ttf', 
+             'LiberationMono-Bold.ttf', 'LiberationSansNarrow-Italic.ttf',
+             'LiberationMono-Italic.ttf', 'LiberationSansNarrow-Regular.ttf',
+             'LiberationMono-Regular.ttf ', 'LiberationSans-Regular.ttf',
+             'LiberationSans-BoldItalic.ttf', 'LiberationSerif-BoldItalic.ttf',
+             'LiberationSans-Bold.ttf', 'LiberationSerif-Bold.ttf',
+             'LiberationSans-Italic.ttf', 'LiberationSerif-Italic.ttf'
+             'LiberationSansNarrow-BoldItalic.ttf', 'LiberationSerif-Regular.ttf']
+    return('/usr/share/fonts/truetype/liberation/' + random.choice(fonts))
+
+def text_as_image(width=300, height=300, text="Hello", filename="tmp.png"):
+    with Image(width=width, height=height) as img:
+        font = Font(path=random_font_path_text(), color=Color(random_colour_text() ))
+        img.caption(text,left=0,top=0,width=img.width-10,height=img.height-5,font=font,gravity='center')
+        img.rotate(random.randrange(0, 360, 5)) # Might make image bigger
+        img.crop((img.width-width)/2, (img.height-height)/2, width+(img.width-width)/2, height+(img.height-height)/2)
+        img.save(filename=filename)
+
+def list_of_images_from_text(textList):
+    images = []
+    for text in textList:
+        tf = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+        text_as_image(text=text, filename=tf.name)
+        images.append(tf.name)
+    return images
+
 
 
 if __name__ == "__main__":
  
-    ii = ['/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Whale.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Raccoon.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Rhino.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Frog.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Penguin.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Koala.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Horse.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Snail.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Wolf.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Monkey.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Bee.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Bear.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Crocodile.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Lobster.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Kangaroo.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Mouse.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Goat.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Dolphin.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Octopus.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Rabbit.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Sheep.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Cat.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Elephant.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Beaver.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Bull.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Shark.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Chicken.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Crab.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Owl.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Gorilla.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Bat.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Hippo.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Pig.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Tuna.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Lion.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Cow.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Eagle.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Duck.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Snake.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Tiger.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Dog.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Deer.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Seal.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Squirrel.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Giraffe.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Turtle.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Rat.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Swan.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Lizard.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Fish.png']
+    texts = ['SplendidSnap', '\@bmsleight', 'Free\nVersion', 'Version\nFree']
+    images = list_of_images_from_text(texts)
+
+    ii = images + ['/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Whale.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Raccoon.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Rhino.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Frog.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Penguin.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Koala.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Horse.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Snail.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Wolf.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Monkey.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Bee.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Bear.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Crocodile.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Lobster.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Kangaroo.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Mouse.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Goat.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Dolphin.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Octopus.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Rabbit.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Sheep.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Cat.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Elephant.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Beaver.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Bull.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Shark.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Chicken.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Crab.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Owl.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Gorilla.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Bat.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Hippo.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Pig.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Tuna.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Lion.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Cow.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Eagle.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Duck.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Snake.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Tiger.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Dog.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Deer.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Seal.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Squirrel.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Giraffe.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Turtle.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Rat.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Swan.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Lizard.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Fish.png']
 
     i = ['/tmp/icons/SplendidSnap.png', '/tmp/icons/anchor.png', '/tmp/icons/arrow.png', '/tmp/icons/circle.png', '/tmp/icons/triangle.png', '/tmp/icons/mouse.png', '/tmp/icons/dice.png']
     pack = Pack(ii) 
     print(pack.images_filenames_list)
 #    card_positions = pack.make_card([0,1,2,3,4,5,6])
-    arrangements = simple_card_list(6)[16:24]
+    arrangements = simple_card_list(6)[1:10]
     for arrangement in arrangements:
         pack.make_card(arrangement)
     print arrangements
