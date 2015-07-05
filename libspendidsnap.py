@@ -4,6 +4,9 @@ from wand.image import Font
 from wand.color import Color
 from wand.display import display
 
+from reportlab.pdfgen.canvas import Canvas
+from reportlab.lib.units import mm
+
 import random, tempfile, binascii
 
 import time
@@ -238,24 +241,61 @@ def list_of_images_from_text(textList):
         images.append(tf.name)
     return images
 
+def draw_grid_lines(pdf, total_card_size_mm, page_x, page_y, cards_x, page_margin_x, cards_y, page_margin_y):
+    # draw grid lines
+    for x in range(0, cards_x+1):
+        x_line = page_margin_x + (x * total_card_size_mm)
+        pdf.line(x_line*mm, 0, x_line*mm, page_y*mm) 
+    for y in range(0, cards_y+1):
+        y_line = page_margin_y + (y * total_card_size_mm)
+        pdf.line(0, y_line*mm, page_x*mm, y_line*mm)
+
+
+def gernerate__a4_pdf_from_images_list(pdf_name="ss.pdf", images_filenames_list=[], card_size_mm = 80, card_boarder_mm = 5):
+    pdf = Canvas(pdf_name)
+    page_x = 210
+    page_y = 297
+    total_card_size_mm = card_size_mm + card_boarder_mm*2
+    cards_x = page_x / total_card_size_mm
+    page_margin_x = (page_x-(cards_x*total_card_size_mm))/2
+    cards_y = page_y / total_card_size_mm
+    page_margin_y = (page_y-(cards_y*total_card_size_mm))/2
+    index_images = 0
+    for pages in range(0, 1+(len(images_filenames_list)/(cards_x*cards_y))):
+        draw_grid_lines(pdf, total_card_size_mm, page_x, page_y, cards_x, page_margin_x, cards_y, page_margin_y)
+        for x in range(0,cards_x):
+            for y in range(0,cards_y):
+                if index_images < len(images_filenames_list):
+                    x_pos = page_margin_x + (x * total_card_size_mm) + card_boarder_mm
+                    y_pos = page_margin_y + (y * total_card_size_mm) + card_boarder_mm
+                    pdf.drawImage(images_filenames_list[index_images], x_pos*mm, y_pos*mm, 
+                                  width=card_size_mm*mm, height=card_size_mm*mm, mask='auto')
+                    index_images = index_images + 1
+        pdf.showPage()
+    pdf.save()
+
 
 
 if __name__ == "__main__":
- 
-    texts = ['SplendidSnap', '\@bmsleight', 'Free\nVersion', 'Version\nFree']
+    gernerate__a4_pdf_from_images_list() 
+    texts = ['Splendid\nSnap', '\@bmsleight', 'Free\nVersion', 'Version\nFree', '\#free', '\#libre', '\#foss']
     images = list_of_images_from_text(texts)
 
     ii = images + ['/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Whale.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Raccoon.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Rhino.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Frog.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Penguin.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Koala.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Horse.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Snail.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Wolf.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Monkey.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Bee.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Bear.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Crocodile.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Lobster.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Kangaroo.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Mouse.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Goat.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Dolphin.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Octopus.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Rabbit.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Sheep.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Cat.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Elephant.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Beaver.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Bull.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Shark.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Chicken.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Crab.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Owl.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Gorilla.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Bat.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Hippo.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Pig.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Tuna.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Lion.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Cow.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Eagle.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Duck.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Snake.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Tiger.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Dog.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Deer.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Seal.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Squirrel.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Giraffe.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Turtle.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Rat.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Swan.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Lizard.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Fish.png']
 
-    i = ['/tmp/icons/SplendidSnap.png', '/tmp/icons/anchor.png', '/tmp/icons/arrow.png', '/tmp/icons/circle.png', '/tmp/icons/triangle.png', '/tmp/icons/mouse.png', '/tmp/icons/dice.png']
+    i = ['/tmp/icons/SplendidSnap.png', '/tmp/icons/anchor.png', '/tmp/icons/arrow.png', '/tmp/icons/circle.png', '/tmp/icons/triangle.png', '/tmp/icons/mouse.png']
     pack = Pack(ii) 
+#    pack = Pack(i) 
     print(pack.images_filenames_list)
+    arrangements = simple_card_list(7)
 #    card_positions = pack.make_card([0,1,2,3,4,5,6])
-    arrangements = simple_card_list(6)[1:10]
+#    arrangements = simple_card_list(1)
+
     for arrangement in arrangements:
         pack.make_card(arrangement)
     print arrangements
     print pack.cards
+    gernerate__a4_pdf_from_images_list(images_filenames_list=pack.cards) 
 #    pack.inspect_card_positions()
 
 
