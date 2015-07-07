@@ -21,7 +21,7 @@ class CardPosition:
         self.thumb_height = thumb_width
         self.rotate = random.randrange(0, 360, 5)
 #        self.percentageSize = random.randrange(20, 90, 10)
-        self.percentageSize = random.choice([30,45,60,70,75,80,85])
+        self.percentageSize = random.choice([45,50,55,60,65,70,75])
         self.thumb = tempfile.NamedTemporaryFile(delete=True, suffix=".png")
         self.thumb_as_list = []
         with Image(filename=thumb_filename) as img:
@@ -29,7 +29,7 @@ class CardPosition:
                 duplicate.rotate(self.rotate)
                 duplicate.transform(resize=str(thumb_width)) # make sure still width s
                 # + 5% to give space between images
-                duplicate.transform(resize=str(self.percentageSize+10)+'%')
+                duplicate.transform(resize=str(self.percentageSize+25)+'%')
                 duplicate.trim()
                 self.thumb_width = duplicate.width # Newe resized width
                 self.thumb_height = duplicate.height # Newe resized width
@@ -208,12 +208,12 @@ def simple_card_list(p):
 
 
 def random_colour_text():
-#    colours = ['red', 'Maroon', 'Yellow', 'Olive', 'Lime', 'Green', 'Aqua', 'Teal', 'Purple']
-#    return(random.choice(colours))
-    r = random.randrange(0, 255, 1)
-    g = random.randrange(0, 255, 1)
-    b = random.randrange(0, 255, 1)
-    colour = 'rgb(' + str(r) + ',' + str(g) + ',' + str(b) + ')'
+    colours = ['red', 'Maroon', 'Yellow', 'Olive', 'Lime', 'Green', 'Aqua', 'Teal', 'Purple']
+    return(random.choice(colours))
+#    r = random.randrange(0, 255, 1)
+#    g = random.randrange(0, 255, 1)
+#    b = random.randrange(0, 255, 1)
+#    colour = 'rgb(' + str(r) + ',' + str(g) + ',' + str(b) + ')'
     return(colour)
 
 def random_font_path_text():
@@ -340,7 +340,7 @@ if __name__ == "__main__":
     if total_needed > len(images):
         raise ValueError('Not enough Images')
     
-    pack = Pack(images)
+    pack = Pack(images[:total_needed])
     for arrangement in arrangements:
         pack.make_card(arrangement)
     print arrangements
