@@ -9,7 +9,8 @@ from reportlab.lib.units import mm
 
 import random, tempfile, binascii
 
-import time
+import argparse, sys, glob
+ 
 
 class CardPosition:
     def __init__(self, position, thumb_filename, thumb_width):
@@ -52,6 +53,7 @@ class Pack:
         for images_filename in images_filenames_list:
             filename_copied = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
             with Image(width=self.standard_width, height=self.standard_width) as img:
+                print images_filename
                 with Image(filename=images_filename) as master_img:
                     if master_img.width > master_img.height:
                         master_img.transform(resize=str(self.standard_width))
@@ -202,7 +204,7 @@ def simple_card_list(p):
     for i in range(p+1):
         pictures.append(p * p + i)
     cards.append(pictures)
-    return cards
+    return cards, p * p + p + 1
 
 
 def random_colour_text():
@@ -276,7 +278,7 @@ def gernerate__a4_pdf_from_images_list(pdf_name="ss.pdf", images_filenames_list=
 
 
 
-if __name__ == "__main__":
+def old_main_ignore():
     gernerate__a4_pdf_from_images_list() 
     texts = ['Splendid\nSnap', '\@bmsleight', 'Free\nVersion', 'Version\nFree', '\#free', '\#libre', '\#foss']
     images = list_of_images_from_text(texts)
@@ -298,4 +300,50 @@ if __name__ == "__main__":
     gernerate__a4_pdf_from_images_list(images_filenames_list=pack.cards) 
 #    pack.inspect_card_positions()
 
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Make of pack of Splendid Snap cards')
+ 
+    parser.add_argument('-v', '--verbose',
+        action="store_true",
+        help="verbose output" ) 
+    parser.add_argument('-t', '--texts',
+        type=argparse.FileType('r'), 
+        help="List of Texts to convert to images")
+    parser.add_argument('-e', '--etexts',
+        type=argparse.FileType('r'), 
+        help="List of Texts to convert to images, will be are essential and will be used")
+    parser.add_argument('-i', '--imagesdir',
+        help="Directory of images to add")
+    parser.add_argument('outfile',
+        help="pdf file to be created")
+    parser.add_argument("-n", "--number", required=True, 
+                    type=int, choices=[3, 4, 5, 6, 7, 8],
+                    help="Number of Images per card")
+    args = parser.parse_args()
+
+
+    arrangements, total_needed = simple_card_list(args.number-1)
+    print("Total Images: ", total_needed, "Images per card: ", args.number)
+
+    images = []
+    if args.texts:
+        texts = args.texts.read().splitlines()
+        print texts
+        images = list_of_images_from_text(texts)
+    if args.imagesdir:
+        images = images + glob.glob(args.imagesdir + '/*')
+    random.shuffle(images)
+    if args.etexts:
+        texts = args.etexts.read().splitlines()
+        images = list_of_images_from_text(texts) + images
+    if total_needed > len(images):
+        raise ValueError('Not enough Images')
+    
+    pack = Pack(images)
+    for arrangement in arrangements:
+        pack.make_card(arrangement)
+    print arrangements
+    print pack.cards
+    gernerate__a4_pdf_from_images_list(images_filenames_list=pack.cards, pdf_name=args.outfile) 
 
