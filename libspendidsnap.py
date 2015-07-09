@@ -21,15 +21,20 @@ class CardPosition:
         self.thumb_height = thumb_width
         self.rotate = random.randrange(0, 360, 5)
 #        self.percentageSize = random.randrange(20, 90, 10)
-        self.percentageSize = random.choice([35,36,37,38,39,40,45,50,75])
+        self.percentageSize = random.choice([35,45,50,75,80])
         self.thumb = tempfile.NamedTemporaryFile(delete=True, suffix="XX.png")
         self.thumb_as_list = []
         with Image(filename=thumb_filename) as img:
             with img[:, :] as duplicate:
+                # Trim takes out border, so I need to double line
+                with Color('red') as border_color:
+                    duplicate.border(color=border_color, width=duplicate.width/10, height=duplicate.height/10)
+                with Color('white') as border_color:
+                    duplicate.border(color=border_color, width=2, height=2)
                 duplicate.rotate(self.rotate)
                 duplicate.transform(resize=str(thumb_width)) # make sure still width s
                 # + 5% to give space between images
-                duplicate.transform(resize=str(self.percentageSize+25)+'%')
+                duplicate.transform(resize=str(self.percentageSize+5)+'%')
                 duplicate.trim()
                 self.thumb_width = duplicate.width # Newe resized width
                 self.thumb_height = duplicate.height # Newe resized width
@@ -72,7 +77,8 @@ class Pack:
         position = []
         for x in range(0,3):
             for y in range(0,3):
-                if x == 1 and y == 1:
+                #if x == 1 and y == 1:
+                if False:
                     pass # not the centre
                 else:
                     position.append((x,y))
@@ -207,7 +213,7 @@ def simple_card_list(p):
       
 
 def random_colour_text():
-    colours = ['red', 'Maroon', 'Yellow', 'Olive', 'Lime', 'Green', 'Aqua', 'Teal', 'Purple']
+    colours = ['red', 'Maroon', 'NavyBlue', 'Olive', 'Lime', 'Green', 'Aqua', 'Teal', 'Purple']
     return(random.choice(colours))
 #    r = random.randrange(0, 255, 1)
 #    g = random.randrange(0, 255, 1)
@@ -229,9 +235,9 @@ def random_font_path_text():
 def text_as_image(width=300, height=300, text="Hello", filename="tmp.png"):
     with Image(width=width, height=height) as img:
         font = Font(path=random_font_path_text(), color=Color(random_colour_text() ))
-        img.caption(text,left=0,top=0,width=img.width-10,height=img.height-5,font=font,gravity='center')
-        img.rotate(random.randrange(0, 360, 5)) # Might make image bigger
-        img.crop((img.width-width)/2, (img.height-height)/2, width+(img.width-width)/2, height+(img.height-height)/2)
+        img.caption(text.decode('utf-8'),left=0,top=0,width=img.width-10,height=img.height-5,font=font,gravity='center')
+#        img.rotate(random.randrange(0, 360, 5)) # Might make image bigger
+#        img.crop((img.width-width)/2, (img.height-height)/2, width+(img.width-width)/2, height+(img.height-height)/2)
         img.save(filename=filename)
 
 def list_of_images_from_text(textList):
@@ -309,7 +315,7 @@ if __name__ == "__main__":
     text_images = []
     if args.texts:
         texts = args.texts.read().splitlines()
-        print texts
+        texts = filter(None, texts)
         text_images = list_of_images_from_text(texts)
         images = text_images
     if args.imagesdir:
@@ -317,6 +323,7 @@ if __name__ == "__main__":
     random.shuffle(images)
     if args.etexts:
         texts = texts + args.etexts.read().splitlines()
+        texts = filter(None, texts)
         text_images_e = list_of_images_from_text(texts) 
         text_images = text_images_e + text_images
         images = text_images_e + images
