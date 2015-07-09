@@ -9,7 +9,7 @@ from reportlab.lib.units import mm
 
 import random, tempfile, binascii
 
-import argparse, sys, glob
+import argparse, sys, glob, os
  
 
 class CardPosition:
@@ -21,8 +21,8 @@ class CardPosition:
         self.thumb_height = thumb_width
         self.rotate = random.randrange(0, 360, 5)
 #        self.percentageSize = random.randrange(20, 90, 10)
-        self.percentageSize = random.choice([45,50,55,60,65,70,75])
-        self.thumb = tempfile.NamedTemporaryFile(delete=True, suffix=".png")
+        self.percentageSize = random.choice([35,36,37,38,39,40,45,50,75])
+        self.thumb = tempfile.NamedTemporaryFile(delete=True, suffix="XX.png")
         self.thumb_as_list = []
         with Image(filename=thumb_filename) as img:
             with img[:, :] as duplicate:
@@ -33,10 +33,6 @@ class CardPosition:
                 duplicate.trim()
                 self.thumb_width = duplicate.width # Newe resized width
                 self.thumb_height = duplicate.height # Newe resized width
-#        print("Card positions ", self.x, self.y)
-    def thumb_at_x_y(self, x, y):
-        return(self.thumb_as_list[(x*self.thumb_width)+y])
-
 
 class Pack:
     def __init__(self, images_filenames_list):
@@ -51,23 +47,27 @@ class Pack:
         self.card_positions = []
         self.debug = True
         for images_filename in images_filenames_list:
-            filename_copied = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+            filename_copied = tempfile.NamedTemporaryFile(delete=False, suffix="YY.png")
             with Image(width=self.standard_width, height=self.standard_width) as img:
-                print images_filename
+                offset_x, offset_y = (0,0)
                 with Image(filename=images_filename) as master_img:
+                    aspect_ratio = float(master_img.width)/float(master_img.height)
                     if master_img.width > master_img.height:
                         master_img.transform(resize=str(self.standard_width))
+                        offset_y = (self.standard_width - master_img.height)/2
                     else:
                         master_img.transform(resize='x' + str(self.standard_width))
-                    img.composite(master_img, 0, 0)
+                        offset_x = (self.standard_width - master_img.width)/2
+                    img.composite(master_img, offset_x, offset_y)
                 img.save(filename=filename_copied.name)
-                if img.width > img.height:
-                    img.transform(resize=str(self.thumb_width))
-                else:
-                    img.transform(resize='x' + str(self.thumb_width))
+                img.transform(resize=str(self.thumb_width))
                 img.save(filename=filename_copied.name + self.thumb_ext)
             self.images_filenames_list.append(filename_copied.name)
-
+    def list_of_thumbs(self):
+        t = []
+        for images_filenames in self.images_filenames_list:
+            t.append(images_filenames + self.thumb_ext)
+        return(t)
     def make_card(self, image_index_list):
         position = []
         for x in range(0,3):
@@ -89,10 +89,10 @@ class Pack:
         interactions = 0
         while(self.move_closer() and interactions < 150):
             interactions = interactions +1
-        print interactions
-        self.inspect_card_positions(display = True)
+#        print interactions
+        self.inspect_card_positions(display = False)
         with Image(width=self.card_width, height=self.card_width) as img:
-            final_card = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+            final_card = tempfile.NamedTemporaryFile(delete=False, suffix="ZZ.png")
             card_index = 0 
             # the index refered to the long list of images [0,1,5,6]
             # card_index is to work through positions of the cards [0,1,2,3]
@@ -111,16 +111,13 @@ class Pack:
                 if img.width > img.height:
                     img.transform(resize=str(self.card_width))
                     final_img.composite(img, 0, (self.card_width - img.height)/2)
-                    print(self.card_width - img.height, " ..")
                 else:
                     img.transform(resize='x' + str(self.card_width))      
                     final_img.composite(img, (self.card_width - img.width)/2, 0)            
-                    print(self.card_width - img.width)
+#                    print(self.card_width - img.width)
                 final_img.save(filename=final_card.name)
 
             self.cards.append(final_card.name)
-            print("Final card: ", final_card.name)
-
 
     def inspect_card_positions(self, display = False):
         inspect_canvas = []
@@ -152,8 +149,8 @@ class Pack:
     def move_closer(self):
         movement = False # No movements
         tmp_card_positions = self.card_positions
-        inc = self.thumb_width / 10
-#        inc = 1
+#        inc = self.thumb_width / 10
+        inc = 1
         for index in range(0, len(self.card_positions)):
             x = self.card_positions[index].x
             if x > (self.thumb_width * 1.5):
@@ -205,7 +202,9 @@ def simple_card_list(p):
         pictures.append(p * p + i)
     cards.append(pictures)
     return cards, p * p + p + 1
-
+    # q = p * p + p + 1
+    # q-1 = p * p + p
+      
 
 def random_colour_text():
     colours = ['red', 'Maroon', 'Yellow', 'Olive', 'Lime', 'Green', 'Aqua', 'Teal', 'Purple']
@@ -238,7 +237,7 @@ def text_as_image(width=300, height=300, text="Hello", filename="tmp.png"):
 def list_of_images_from_text(textList):
     images = []
     for text in textList:
-        tf = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+        tf = tempfile.NamedTemporaryFile(delete=False, suffix="WW.png")
         text_as_image(text=text, filename=tf.name)
         images.append(tf.name)
     return images
@@ -276,30 +275,9 @@ def gernerate__a4_pdf_from_images_list(pdf_name="ss.pdf", images_filenames_list=
         pdf.showPage()
     pdf.save()
 
-
-
-def old_main_ignore():
-    gernerate__a4_pdf_from_images_list() 
-    texts = ['Splendid\nSnap', '\@bmsleight', 'Free\nVersion', 'Version\nFree', '\#free', '\#libre', '\#foss']
-    images = list_of_images_from_text(texts)
-
-    ii = images + ['/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Whale.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Raccoon.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Rhino.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Frog.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Penguin.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Koala.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Horse.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Snail.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Wolf.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Monkey.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Bee.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Bear.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Crocodile.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Lobster.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Kangaroo.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Mouse.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Goat.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Dolphin.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Octopus.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Rabbit.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Sheep.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Cat.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Elephant.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Beaver.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Bull.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Shark.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Chicken.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Crab.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Owl.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Gorilla.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Bat.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Hippo.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Pig.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Tuna.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Lion.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Cow.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Eagle.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Duck.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Snake.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Tiger.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Dog.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Deer.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Seal.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Squirrel.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Giraffe.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Turtle.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Rat.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Swan.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Lizard.png', '/home/bms/SplendidSnap/HTDFC-50-Animals-Square-PNG-Files/Fish.png']
-
-    i = ['/tmp/icons/SplendidSnap.png', '/tmp/icons/anchor.png', '/tmp/icons/arrow.png', '/tmp/icons/circle.png', '/tmp/icons/triangle.png', '/tmp/icons/mouse.png']
-    pack = Pack(ii) 
-#    pack = Pack(i) 
-    print(pack.images_filenames_list)
-    arrangements = simple_card_list(7)
-#    card_positions = pack.make_card([0,1,2,3,4,5,6])
-#    arrangements = simple_card_list(1)
-
-    for arrangement in arrangements:
-        pack.make_card(arrangement)
-    print arrangements
-    print pack.cards
-    gernerate__a4_pdf_from_images_list(images_filenames_list=pack.cards) 
-#    pack.inspect_card_positions()
-
+def clean_up(remove):
+    for rm in remove:
+        os.remove(rm)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Make of pack of Splendid Snap cards')
@@ -327,23 +305,32 @@ if __name__ == "__main__":
     print("Total Images: ", total_needed, "Images per card: ", args.number)
 
     images = []
+    texts = []
+    text_images = []
     if args.texts:
         texts = args.texts.read().splitlines()
         print texts
-        images = list_of_images_from_text(texts)
+        text_images = list_of_images_from_text(texts)
+        images = text_images
     if args.imagesdir:
         images = images + glob.glob(args.imagesdir + '/*')
     random.shuffle(images)
     if args.etexts:
-        texts = args.etexts.read().splitlines()
-        images = list_of_images_from_text(texts) + images
+        texts = texts + args.etexts.read().splitlines()
+        text_images_e = list_of_images_from_text(texts) 
+        text_images = text_images_e + text_images
+        images = text_images_e + images
     if total_needed > len(images):
         raise ValueError('Not enough Images')
     
     pack = Pack(images[:total_needed])
     for arrangement in arrangements:
         pack.make_card(arrangement)
-    print arrangements
-    print pack.cards
+
     gernerate__a4_pdf_from_images_list(images_filenames_list=pack.cards, pdf_name=args.outfile) 
+
+    clean_up(pack.cards + pack.list_of_thumbs() + pack.images_filenames_list)
+    clean_up(text_images)
+#    print pack.images_filenames_list
+#    clean_up(pack.images_filenames_list)
 
