@@ -213,7 +213,7 @@ def simple_card_list(p):
       
 
 def random_colour_text():
-    colours = ['red', 'Maroon', 'NavyBlue', 'Olive', 'Lime', 'Green', 'Aqua', 'Teal', 'Purple']
+    colours = ['red', 'Orange', 'Green', 'NavyBlue', 'Purple', 'Brown']
     return(random.choice(colours))
 #    r = random.randrange(0, 255, 1)
 #    g = random.randrange(0, 255, 1)
@@ -230,12 +230,17 @@ def random_font_path_text():
              'LiberationSans-Bold.ttf', 'LiberationSerif-Bold.ttf',
              'LiberationSans-Italic.ttf', 'LiberationSerif-Italic.ttf'
              'LiberationSansNarrow-BoldItalic.ttf', 'LiberationSerif-Regular.ttf']
-    return('/usr/share/fonts/truetype/liberation/' + random.choice(fonts))
+#    return('/usr/share/fonts/truetype/liberation/' + random.choice(fonts))
+    paths = ['/usr/share/fonts/truetype/freefont/*', '/usr/share/fonts/truetype/liberation/*', '/usr/share/fonts/truetype/ubuntu-font-family/*']
+    font = []
+    for path in paths:
+        fonts = fonts + glob.glob(path)
+    return(random.choice(fonts))
 
 def text_as_image(width=300, height=300, text="Hello", filename="tmp.png"):
     with Image(width=width, height=height) as img:
         font = Font(path=random_font_path_text(), color=Color(random_colour_text() ))
-        img.caption(text.decode('utf-8'),left=0,top=0,width=img.width-10,height=img.height-5,font=font,gravity='center')
+        img.caption(text.decode('utf-8'),left=0,top=0,width=img.width,height=img.height,font=font,gravity='center')
 #        img.rotate(random.randrange(0, 360, 5)) # Might make image bigger
 #        img.crop((img.width-width)/2, (img.height-height)/2, width+(img.width-width)/2, height+(img.height-height)/2)
         img.save(filename=filename)
@@ -250,6 +255,8 @@ def list_of_images_from_text(textList):
 
 def draw_grid_lines(pdf, total_card_size_mm, page_x, page_y, cards_x, page_margin_x, cards_y, page_margin_y):
     # draw grid lines
+    pdf.setLineWidth(0.1)
+    pdf.setDash(1,10)
     for x in range(0, cards_x+1):
         x_line = page_margin_x + (x * total_card_size_mm)
         pdf.line(x_line*mm, 0, x_line*mm, page_y*mm) 
@@ -336,8 +343,8 @@ if __name__ == "__main__":
 
     gernerate__a4_pdf_from_images_list(images_filenames_list=pack.cards, pdf_name=args.outfile) 
 
-    clean_up(pack.cards + pack.list_of_thumbs() + pack.images_filenames_list)
-    clean_up(text_images)
+#    clean_up(pack.cards + pack.list_of_thumbs() + pack.images_filenames_list)
+#    clean_up(text_images)
+
 #    print pack.images_filenames_list
-#    clean_up(pack.images_filenames_list)
 
