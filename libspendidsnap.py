@@ -21,13 +21,13 @@ class CardPosition:
         self.thumb_height = thumb_width
         self.rotate = random.randrange(0, 360, 5)
 #        self.percentageSize = random.randrange(20, 90, 10)
-        self.percentageSize = random.choice([35,45,50,75,80])
+        self.percentageSize = random.choice([40,45,50,75,80])
         self.thumb = tempfile.NamedTemporaryFile(delete=True, suffix="XX.png")
         self.thumb_as_list = []
         with Image(filename=thumb_filename) as img:
             with img[:, :] as duplicate:
                 # Trim takes out border, so I need to double line
-                with Color('red') as border_color:
+                with Color('Chocolate') as border_color:
                     duplicate.border(color=border_color, width=duplicate.width/10, height=duplicate.height/10)
                 with Color('white') as border_color:
                     duplicate.border(color=border_color, width=2, height=2)
@@ -207,9 +207,19 @@ def simple_card_list(p):
     for i in range(p+1):
         pictures.append(p * p + i)
     cards.append(pictures)
-    return cards, p * p + p + 1
+    return cards, p * p + p +1
     # q = p * p + p + 1
     # q-1 = p * p + p
+
+def display_using_stars(cards, num_pictures):
+    for pictures_for_card in cards:
+        p = ""
+        for c in range(1,num_pictures+1):
+            if c in pictures_for_card:
+                p = p  + '{: >3d}'.format(c)
+            else:
+                p = p + "   "
+        print p
       
 
 def random_colour_text():
@@ -240,16 +250,14 @@ def random_font_path_text():
 def text_as_image(width=300, height=300, text="Hello", filename="tmp.png"):
     with Image(width=width, height=height) as img:
         font = Font(path=random_font_path_text(), color=Color(random_colour_text() ))
-        img.caption(text.decode('utf-8'),left=0,top=0,width=img.width,height=img.height,font=font,gravity='center')
-#        img.rotate(random.randrange(0, 360, 5)) # Might make image bigger
-#        img.crop((img.width-width)/2, (img.height-height)/2, width+(img.width-width)/2, height+(img.height-height)/2)
+        img.caption(text.decode('utf-8'),left=0, top=0,width=width,height=height,font=font,gravity='center')
         img.save(filename=filename)
 
 def list_of_images_from_text(textList):
     images = []
     for text in textList:
         tf = tempfile.NamedTemporaryFile(delete=False, suffix="WW.png")
-        text_as_image(text=text, filename=tf.name)
+        text_as_image(text=text.rstrip().lstrip(), filename=tf.name)
         images.append(tf.name)
     return images
 
@@ -311,11 +319,13 @@ if __name__ == "__main__":
     parser.add_argument("-n", "--number", required=True, 
                     type=int, choices=[3, 4, 5, 6, 7, 8],
                     help="Number of Images per card")
+    parser.add_argument('--stayinorder', action='store_true', help='Keep order, not random' )
     args = parser.parse_args()
 
-
     arrangements, total_needed = simple_card_list(args.number-1)
-    print("Total Images: ", total_needed, "Images per card: ", args.number)
+    if args.verbose:
+        print("Total Images: ", total_needed-1, "Images per card: ", args.number, "Total Cards: ", len(arrangements))
+        display_using_stars(arrangements, total_needed)
 
     images = []
     texts = []
@@ -327,9 +337,12 @@ if __name__ == "__main__":
         images = text_images
     if args.imagesdir:
         images = images + glob.glob(args.imagesdir + '/*')
-    random.shuffle(images)
+    if args.stayinorder:
+        pass
+    else:
+        random.shuffle(images)
     if args.etexts:
-        texts = texts + args.etexts.read().splitlines()
+        texts = args.etexts.read().splitlines()
         texts = filter(None, texts)
         text_images_e = list_of_images_from_text(texts) 
         text_images = text_images_e + text_images
@@ -337,14 +350,17 @@ if __name__ == "__main__":
     if total_needed > len(images):
         raise ValueError('Not enough Images')
     
+    if args.verbose:
+        print(images[:total_needed], texts)
+
     pack = Pack(images[:total_needed])
     for arrangement in arrangements:
         pack.make_card(arrangement)
 
     gernerate__a4_pdf_from_images_list(images_filenames_list=pack.cards, pdf_name=args.outfile) 
 
-#    clean_up(pack.cards + pack.list_of_thumbs() + pack.images_filenames_list)
-#    clean_up(text_images)
+    clean_up(pack.cards + pack.list_of_thumbs() + pack.images_filenames_list)
+    clean_up(text_images)
 
 #    print pack.images_filenames_list
 
