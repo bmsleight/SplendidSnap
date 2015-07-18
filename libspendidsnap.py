@@ -6,10 +6,16 @@ from wand.display import display
 
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.lib.units import mm
+from reportlab.lib.pagesizes import A4, cm
+
+from reportlab.platypus import Paragraph
+from reportlab.lib.enums import TA_LEFT, TA_CENTER
+from reportlab.lib.styles import ParagraphStyle
+
 
 import random, tempfile, binascii
 
-import argparse, sys, glob, os
+import argparse, sys, glob, os, shutil, zipfile
  
 
 class CardPosition:
@@ -95,7 +101,6 @@ class Pack:
         interactions = 0
         while(self.move_closer() and interactions < 150):
             interactions = interactions +1
-#        print interactions
         self.inspect_card_positions(display = False)
         with Image(width=self.card_width, height=self.card_width) as img:
             final_card = tempfile.NamedTemporaryFile(delete=False, suffix="ZZ.png")
@@ -120,7 +125,6 @@ class Pack:
                 else:
                     img.transform(resize='x' + str(self.card_width))      
                     final_img.composite(img, (self.card_width - img.width)/2, 0)            
-#                    print(self.card_width - img.width)
                 final_img.save(filename=final_card.name)
 
             self.cards.append(final_card.name)
@@ -166,7 +170,6 @@ class Pack:
             if (self.inspect_card_positions()):
                 # We have a clash with this move - revert
                 self.card_positions[index].x = x
-#                print("REVERT")
             else:
                 movement = True
         for index in range(0, len(self.card_positions)):
@@ -178,10 +181,8 @@ class Pack:
             if (self.inspect_card_positions()):
                 # We have a clash with this move - revert
                 self.card_positions[index].y = y
-#                print("REVERT")
             else:
                 movement = True
-#        print("Movement :", movement)
         return movement
 
 	
@@ -250,8 +251,89 @@ def random_font_path_text():
 def text_as_image(width=300, height=300, text="Hello", filename="tmp.png"):
     with Image(width=width, height=height) as img:
         font = Font(path=random_font_path_text(), color=Color(random_colour_text() ))
-        img.caption(text.decode('utf-8'),left=0, top=0,width=width,height=height,font=font,gravity='center')
+        img.caption(text.decode('utf-8'),left=8, top=8,width=width-15,height=height-15,font=font,gravity='center')
         img.save(filename=filename)
+
+def unpack_flat(hilly_zip):
+    tmp_dir = tempfile.mkdtemp(suffix="_flat_zip")
+    with zipfile.ZipFile(hilly_zip) as zip_file:    
+
+        for member in zip_file.namelist():
+            filename = os.path.basename(member)
+            # skip directories
+            if not filename:
+                continue
+
+            # copy file (taken from zipfile's extract)
+            source = zip_file.open(member)
+            target = file(os.path.join(tmp_dir, filename), "wb")
+            with source, target:
+                shutil.copyfileobj(source, target)
+    return tmp_dir
+
+def simple_text_wrap(canvas, h_from_top, text, style, w_from_side = 1*cm, increment_h = 1*cm):
+    width, height = A4
+    p = Paragraph(text, style)
+    p_width, p_height = p.wrapOn(canvas, width-2*w_from_side, h_from_top)
+    h_from_top = h_from_top - p_height
+    p.drawOn(canvas, w_from_side, h_from_top)
+    return h_from_top
+
+def titlePage(canvas, pack_name, creator, images_per_card, word_list, image_zip_name, source_of_images):
+    width, height = A4
+    title = ParagraphStyle('title',
+        fontName='Helvetica-Bold', fontSize=24, leading=48,
+        alignment=TA_CENTER,
+    )
+    normal = ParagraphStyle('normal',
+        fontName='Helvetica', fontSize=12, leading=18,
+        alignment=TA_LEFT,
+    )    
+    config = ParagraphStyle('normal',
+        fontName='Helvetica', fontSize=10, leading=10,
+        alignment=TA_LEFT,
+    )
+
+    text_title = 'Splendid Snap' 
+    text_detail='''
+Splendid Snap is a group card game. It consists of a pack of cards, with a selection of symbols on each card.  On two cards, there is one identical symbol in common on each card. On any two cards, there will always be one and only one match of symbols. 
+<br/>
+<br/>
+<u>How to play - Two to Six Players</u>
+<br/>
+Choose one person to deal the cards between the players. 
+<br/>
+A full game you deal 10 cards face down for each player and one card in the middle, (less cards can be dealt for a quicker game).
+<br/>
+<br/>
+Each player turns their pile of cards over but keeps them covered with their hand. The dealer turns the centre card and shouts "Splendid".
+<br/>
+<br/>
+Each player looks for a matching symbol (or words) on their top card which matches the centre card. When they find one they must shout the symbol as they put it on top of the centre pile. This card placed becomes the new card everyone must now try and match. If the person does not shout the name they will not be allowed to place the card. If two people call out exactly the same time, they can both place their card.
+<br/>
+<br/>
+The person to win is the one who manages to get rid of all of their cards first.
+'''
+    h_from_top = height - 1*cm
+    w_from_side = 1*cm
+
+    h_from_top = simple_text_wrap(canvas, h_from_top, text_title, title)
+    h_from_top = simple_text_wrap(canvas, h_from_top, text_detail, normal)
+    h_from_top = h_from_top - 5*cm
+    h_from_top = simple_text_wrap(canvas, h_from_top, "<u>Pack Details</u>", normal)
+    h_from_top = simple_text_wrap(canvas, h_from_top, "Pack name: " + pack_name + " with " + str(images_per_card) + " images per card", config)
+    if word_list:
+        using = "Using word list of " + str(word_list).decode('unicode_escape')
+        h_from_top = simple_text_wrap(canvas, h_from_top, using, config)
+    if image_zip_name:
+        using = "Using images in zip file: " + image_zip_name
+        h_from_top = simple_text_wrap(canvas, h_from_top, using, config)
+    if source_of_images:
+        h_from_top = simple_text_wrap(canvas, h_from_top, "Images from: " + source_of_images, config)
+    h_from_top = simple_text_wrap(canvas, h_from_top, "Created by: " + creator, config)
+    canvas.showPage()
+
+
 
 def list_of_images_from_text(textList):
     images = []
@@ -273,8 +355,9 @@ def draw_grid_lines(pdf, total_card_size_mm, page_x, page_y, cards_x, page_margi
         pdf.line(0, y_line*mm, page_x*mm, y_line*mm)
 
 
-def gernerate__a4_pdf_from_images_list(pdf_name="ss.pdf", images_filenames_list=[], card_size_mm = 80, card_boarder_mm = 5):
+def generate__a4_pdf_from_images_list(pdf_name="ss.pdf", images_filenames_list=[], card_size_mm = 80, card_boarder_mm = 5, pack_name = "SplendidSomething", creator="bmsleight", images_per_card = 3, word_list = [], image_zip_name = "", source_of_images = ""):
     pdf = Canvas(pdf_name)
+    titlePage(pdf, pack_name, creator, images_per_card, word_list, image_zip_name, source_of_images)
     page_x = 210
     page_y = 297
     total_card_size_mm = card_size_mm + card_boarder_mm*2
@@ -357,10 +440,8 @@ if __name__ == "__main__":
     for arrangement in arrangements:
         pack.make_card(arrangement)
 
-    gernerate__a4_pdf_from_images_list(images_filenames_list=pack.cards, pdf_name=args.outfile) 
+    generate__a4_pdf_from_images_list(images_filenames_list=pack.cards, pdf_name=args.outfile) 
 
     clean_up(pack.cards + pack.list_of_thumbs() + pack.images_filenames_list)
     clean_up(text_images)
-
-#    print pack.images_filenames_list
 
