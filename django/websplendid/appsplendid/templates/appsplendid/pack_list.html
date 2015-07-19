@@ -1,0 +1,16 @@
+{% extends 'base.html' %} 
+
+{% block title %} - Packs{% endblock %}
+
+{% block content %}
+
+{% for pack in packs %}
+    <div>
+        <ul>
+        <li>{{ pack }}</li>
+        </ul>
+    </div>
+{% endfor %}
+
+{% endblock %}
+

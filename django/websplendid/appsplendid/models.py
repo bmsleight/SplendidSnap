@@ -8,10 +8,10 @@ class Splendid(models.Model):
     creator = models.CharField(max_length=20)
     images_per_card = models.IntegerField(validators=[MinValueValidator(3), MaxValueValidator(8)])
     words = models.TextField(null=True)
-    image_zip_file = models. FileField(upload_to='zips', null=True)
-    source_of_images = models.TextField()
+    image_zip_file = models. FileField(upload_to='zips', null=True, blank=True)
+    source_of_images = models.TextField( null=True, blank=True)
     # No need for BooleanField as pdf will be null or point to error.pdf
-    pdf = models. FileField(upload_to='pdfs', null=True)
+    pdf = models. FileField(upload_to='pdfs', null=True, blank=True)
 
     # Date published ?
 
