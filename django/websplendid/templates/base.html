@@ -1,11 +1,38 @@
-<html>
-    <head>
-        <title>{% block head_title %}Splendid Snap{% endblock %}</title>
-    </head>
-    <body>
-        <h1>Splendid Snap{% block title %}{% endblock %}</h1>
-        {% block content %}
+{% extends 'bootstrap.html' %}
 
-        {% endblock %}
-    </body>
-</html>
+{% load url from future %}
+
+{% load bootstrap3 %}
+
+{% block bootstrap3_content %}
+    <div class="container">
+        <h1>Splendid Snap {% block title %}(no title){% endblock %}</h1>
+
+        <p>
+            <a href="/">/</a>
+            |
+            <a href="{% url 'pack_new' %}">New Splendid Snap Pack </a>
+            |
+            <a href="{% url 'pack_list' %}">View List of Splendid Snap Packs</a>
+            |
+
+
+{% comment %} 
+            <a href="{% url 'home' %}">home</a>
+            <a href="{% url 'formset_default' %}">formset</a>
+            <a href="{% url 'form_default' %}">form</a>
+            <a href="{% url 'form_by_field' %}">form_by_field</a>
+            <a href="{% url 'form_horizontal' %}">form_horizontal</a>
+            <a href="{% url 'form_inline' %}">form_inline</a>
+            <a href="{% url 'form_with_files' %}">form_with_files</a>
+            <a href="{% url 'pagination' %}">pagination</a>
+            <a href="{% url 'misc' %}">miscellaneous</a>
+{% endcomment %}
+        </p>
+
+        {% bootstrap_messages %}
+
+        {% block content %}(no content){% endblock %}
+    </div>
+
+{% endblock %}

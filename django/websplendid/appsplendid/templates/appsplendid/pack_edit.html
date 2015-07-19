@@ -1,9 +1,17 @@
 {% extends 'base.html' %} 
 
+{% load bootstrap3 %}
+
+{% block title %}
+   - Create a New Pack
+{% endblock %}
+
 {% block content %}
-    <h1>New Pack</h1>
-    <form method="POST" class="post-form">{% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="save btn btn-default">Save</button>
+
+    <form role="form" class="form-horizontal" method="post">
+        {% csrf_token %}
+        {% bootstrap_form form layout="horizontal" %}
+        {% buttons submit='OK' reset='Cancel' layout='horizontal' %}{% endbuttons %}
     </form>
+
 {% endblock %}
