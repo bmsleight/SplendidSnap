@@ -220,7 +220,7 @@ def display_using_stars(cards, num_pictures):
                 p = p  + '{: >3d}'.format(c)
             else:
                 p = p + "   "
-        print p
+        print (p)
       
 
 def random_colour_text():
@@ -271,8 +271,13 @@ def unpack_flat(hilly_zip):
                 shutil.copyfileobj(source, target)
     return tmp_dir
 
-def simple_text_wrap(canvas, h_from_top, text, style, w_from_side = 1*cm, increment_h = 1*cm):
+def simple_text_wrap(canvas, h_from_top, text, style="", w_from_side = 1*cm, increment_h = 1*cm):
     width, height = A4
+    if not style:
+        style = ParagraphStyle('nostyle',
+        fontName='Helvetica-Bold', fontSize=6, leading=6,
+        alignment=TA_CENTER,
+        )
     p = Paragraph(text, style)
     p_width, p_height = p.wrapOn(canvas, width-2*w_from_side, h_from_top)
     h_from_top = h_from_top - p_height
@@ -294,7 +299,7 @@ def titlePage(canvas, pack_name, creator, images_per_card, word_list, image_zip_
         alignment=TA_LEFT,
     )
 
-    text_title = 'Splendid Snap' 
+    text_title = "<link href='http://SplendidSnap.com'  color='blue'>Splendid Snap</link>"
     text_detail='''
 Splendid Snap is a group card game. It consists of a pack of cards, with a selection of symbols on each card.  On two cards, there is one identical symbol in common on each card. On any two cards, there will always be one and only one match of symbols. 
 <br/>
@@ -338,9 +343,10 @@ The person to win is the one who manages to get rid of all of their cards first.
 def list_of_images_from_text(textList):
     images = []
     for text in textList:
-        tf = tempfile.NamedTemporaryFile(delete=False, suffix="WW.png")
-        text_as_image(text=text.rstrip().lstrip(), filename=tf.name)
-        images.append(tf.name)
+        if text:
+            tf = tempfile.NamedTemporaryFile(delete=False, suffix="WW.png")
+            text_as_image(text=text.rstrip().lstrip(), filename=tf.name)
+            images.append(tf.name)
     return images
 
 def draw_grid_lines(pdf, total_card_size_mm, page_x, page_y, cards_x, page_margin_x, cards_y, page_margin_y):
@@ -376,6 +382,7 @@ def generate__a4_pdf_from_images_list(pdf_name="ss.pdf", images_filenames_list=[
                     pdf.drawImage(images_filenames_list[index_images], x_pos*mm, y_pos*mm, 
                                   width=card_size_mm*mm, height=card_size_mm*mm, mask='auto')
                     index_images = index_images + 1
+        simple_text_wrap(pdf, 5*mm, "<link href='http://SplendidSnap.com' color='blue'>Created at http://SplendidSnap.com</link>")
         pdf.showPage()
     pdf.save()
 
@@ -397,6 +404,8 @@ if __name__ == "__main__":
         help="List of Texts to convert to images, will be are essential and will be used")
     parser.add_argument('-i', '--imagesdir',
         help="Directory of images to add")
+    parser.add_argument('-z', '--imageszip',
+        help="A zip files of images to add")
     parser.add_argument('outfile',
         help="pdf file to be created")
     parser.add_argument("-n", "--number", required=True, 
@@ -418,6 +427,9 @@ if __name__ == "__main__":
         texts = filter(None, texts)
         text_images = list_of_images_from_text(texts)
         images = text_images
+    if args.imageszip:
+        tmp_imagesdir = unpack_flat(args.imageszip)
+        images = images + glob.glob(tmp_imagesdir + '/*')
     if args.imagesdir:
         images = images + glob.glob(args.imagesdir + '/*')
     if args.stayinorder:
@@ -444,4 +456,5 @@ if __name__ == "__main__":
 
     clean_up(pack.cards + pack.list_of_thumbs() + pack.images_filenames_list)
     clean_up(text_images)
-
+    if args.imageszip:
+        shutil.rmtree(tmp_imagesdir)
