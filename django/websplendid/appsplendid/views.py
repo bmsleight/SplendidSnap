@@ -11,10 +11,9 @@ def pack_list(request):
 
 def pack_new(request):
     if request.method == "POST":
-        form = SplendidForm(request.POST)
+        form = SplendidForm(request.POST, request.FILES)
         if form.is_valid():
-            post = form.save(commit=False)
-            post.save()
+            form.save()
             return redirect('appsplendid.views.pack_list')
     else:
         form = SplendidForm()

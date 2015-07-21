@@ -13,11 +13,36 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
 
+#Development
+MEDIA_ROOT = '/tmp/www/media/'
+MEDIA_URL = '/media/'
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '91)+1f#e2)1cqt$@273e7)q!brerodazwk$rrhc-_i-6nena=!'
+#SECRET_KEY = '91)+1f#e2)1cqt$@273e7)q!brerodazwk$rrhc-_i-6nena=!'
+def find_or_create_secret_key():
+    """
+    Look for secret_key.py and return the SECRET_KEY entry in it if the file exists.
+    Otherwise, generate a new secret key, save it in secret_key.py, and return the key.
+    """
+    secret_key_filepath = os.path.join(os.path.dirname(__file__), 'secret_key.py')
+
+    if os.path.isfile(secret_key_filepath):
+        from secret_key import SECRET_KEY
+        return SECRET_KEY
+    else:
+        from django.utils.crypto import get_random_string
+        chars = 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)'
+        new_key = get_random_string(50, chars)
+        with file(secret_key_filepath, 'w') as f:
+            f.write("# Django secret key\n# Do NOT check this into version control.\n\nSECRET_KEY = '%s'\n" % new_key)
+        from secret_key import SECRET_KEY
+        return SECRET_KEY
+
+# Make this unique, and don't share it with anybody.
+SECRET_KEY = find_or_create_secret_key()
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
