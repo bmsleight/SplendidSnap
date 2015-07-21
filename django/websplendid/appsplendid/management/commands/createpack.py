@@ -15,9 +15,12 @@ class Command(BaseCommand):
             self.stdout.write('Pack 1: "%s"' % pack)
             if not os.path.exists(settings.MEDIA_ROOT + PDFS):
                 os.makedirs(settings.MEDIA_ROOT + PDFS)
-            pdf_name = settings.MEDIA_ROOT + PDFS + "/" 
-            pdf_shortfile = pack.pack_name + "_by_" + pack.creator + "_" + str(pack.id) + ".pdf"
-            pdf_name = pdf_name + pdf_shortfile
+            store_root = settings.MEDIA_ROOT  
+            pdf_mid = PDFS + "/" + pack.pack_name + "_by_" + pack.creator + "_" + str(pack.id)
+            pdf_shortfile = pdf_mid + ".pdf"
+            showcase_short = pdf_mid + ".png"
+            pdf_name = store_root + pdf_shortfile
+            showcase = store_root + showcase_short
             texts = []
             images = []
             text_images = []
@@ -52,6 +55,8 @@ class Command(BaseCommand):
                                                               source_of_images = pack.source_of_images,
                                                               
 )
+            _libspendidsnap.showcase_image(real_pack.cards, showcase=showcase)
+            pack.pair_image = showcase_short
             pack.pdf = pdf_shortfile
             pack.save()
             _libspendidsnap.clean_up(real_pack.cards + real_pack.list_of_thumbs() + real_pack.images_filenames_list)

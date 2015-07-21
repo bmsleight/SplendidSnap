@@ -254,6 +254,27 @@ def text_as_image(width=300, height=300, text="Hello", filename="tmp.png"):
         img.caption(text.decode('utf-8'),left=8, top=8,width=width-15,height=height-15,font=font,gravity='center')
         img.save(filename=filename)
 
+def showcase_image(images_filenames_list, showcase = "/tmp/show.png", width=850, height=450):
+    # Need to mkae these width actually not just globals. lazy code
+    index = len(images_filenames_list) - 1
+    with Image(width=width, height=height) as img:
+       with Image(filename=images_filenames_list[index]) as overlay:
+           overlay.transform(resize=str(300))
+           with Color('white') as border_color:
+               overlay.border(color=border_color, width=20, height=20)
+           with Color('black') as border_color:
+               overlay.border(color=border_color, width=5, height=5)
+           img.composite(overlay, 50, 50)
+       with Image(filename=images_filenames_list[index-1]) as overlay:
+           overlay.transform(resize=str(300))
+           with Color('white') as border_color:
+               overlay.border(color=border_color, width=20, height=20)
+           with Color('black') as border_color:
+               overlay.border(color=border_color, width=5, height=5)
+           img.composite(overlay, 450, 50)
+       img.save(filename=showcase)
+
+
 def unpack_flat(hilly_zip):
     tmp_dir = tempfile.mkdtemp(suffix="_flat_zip")
     with zipfile.ZipFile(hilly_zip) as zip_file:    
@@ -453,8 +474,11 @@ if __name__ == "__main__":
         pack.make_card(arrangement)
 
     generate__a4_pdf_from_images_list(images_filenames_list=pack.cards, pdf_name=args.outfile) 
+    showcase_image(pack.cards)
 
     clean_up(pack.cards + pack.list_of_thumbs() + pack.images_filenames_list)
     clean_up(text_images)
     if args.imageszip:
         shutil.rmtree(tmp_imagesdir)
+
+
