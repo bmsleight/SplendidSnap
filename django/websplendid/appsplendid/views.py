@@ -11,7 +11,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 def pack_list(request):
     packs_list = Splendid.objects.all().order_by('-id')
 
-    paginator = Paginator(packs_list, 2) # Show 2 contacts per page
+    paginator = Paginator(packs_list, 5) # Show 2 contacts per page
 
     page = request.GET.get('page')
     try:

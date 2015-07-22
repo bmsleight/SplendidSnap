@@ -26,7 +26,7 @@ class Command(BaseCommand):
             text_images = []
             image_zip_name = ""
             if pack.words:
-                texts = pack.words.split(",")
+                texts = pack.words.encode('utf-8').strip().split(',')
                 texts = filter(None, texts)
                 text_images = _libspendidsnap.list_of_images_from_text(texts)
                 images = text_images
@@ -41,6 +41,15 @@ class Command(BaseCommand):
 
             arrangements, total_needed = _libspendidsnap.simple_card_list(pack.images_per_card-1)
             random.shuffle(images)
+            #Now add the mandatory images - after the random shuffle
+            if pack.free:
+                free_texts = ['SplendidSnap.com', 'Free\\nVersion', '\@SplendidSnap']
+                free_images = _libspendidsnap.list_of_images_from_text(free_texts)
+                text_images = text_images + free_images
+                # Add at start so they have to be included
+                images = free_images + images
+            if total_needed > len(images):
+                pass # Adds lots of not enough images - or random words ?
             real_pack = _libspendidsnap.Pack(images[:total_needed])
             for arrangement in arrangements:
                 real_pack.make_card(arrangement)
@@ -64,7 +73,7 @@ class Command(BaseCommand):
                 _libspendidsnap.clean_up(text_images)
             if pack.image_zip_file:
                 shutil.rmtree(tmp_imagesdir)
-            tweet = pack.pack_name + ' by @' + pack.creator + 'Downlaod the full pack - http://SplendidSnap.com/appsplendid (' + str(pack.id) + ') Or just fidn the Splendid Snap below'
+            tweet = pack.pack_name + ' by @' + pack.creator + ' Download the full pack - http://SplendidSnap.com/appsplendid (' + str(pack.id) + ')'
             print tweet, showcase
             _tweetss.tweet(showcase, tweet.decode("utf8"))
 

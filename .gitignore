@@ -55,3 +55,8 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# django/websplendid/websplendid/secret_key.py
+django/websplendid/websplendid/secret_key.py
+django/websplendid/appsplendid/management/commands/_secret_key.py
+
