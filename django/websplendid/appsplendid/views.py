@@ -9,7 +9,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 # Create your views here.
 
 def pack_list(request):
-    packs_list = Splendid.objects.all().reverse()
+    packs_list = Splendid.objects.all().order_by('-id')
 
     paginator = Paginator(packs_list, 2) # Show 2 contacts per page
 

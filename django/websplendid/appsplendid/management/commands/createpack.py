@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 
 from appsplendid.models import Splendid, PDFS
-import _libspendidsnap, random, shutil, glob, os
+import _libspendidsnap, _tweetss, random, shutil, glob, os
 
 class Command(BaseCommand):
 #    args = '<poll_id poll_id ...>'
@@ -64,5 +64,8 @@ class Command(BaseCommand):
                 _libspendidsnap.clean_up(text_images)
             if pack.image_zip_file:
                 shutil.rmtree(tmp_imagesdir)
+            tweet = pack.pack_name + ' by @' + pack.creator + 'Downlaod the full pack - http://SplendidSnap.com/appsplendid (' + str(pack.id) + ') Or just fidn the Splendid Snap below'
+            print tweet, showcase
+            _tweetss.tweet(showcase, tweet.decode("utf8"))
 
 
