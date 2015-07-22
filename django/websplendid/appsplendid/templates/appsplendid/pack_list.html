@@ -6,11 +6,47 @@
 
 {% for pack in packs %}
     <div>
-        <ul>
-        <li>{{ pack }}</li>
-        </ul>
+        <h3>{{ pack }}</h3>
+        {% if pack.pair_image %}
+            <p>Two cards from the pack, can you find the match ?</p>
+            <img src='{{ media_url }}{{ pack.pair_image }}'>
+            <p><a href='{{ media_url }}{{pack.pdf}}'>Downlaod the whole pack as a pdf (Warning large file)</a>
+            <p> The pack with {{pack.images_per_card}} images per card generated using:-</p>
+            <ul>
+            {% if pack.words %}
+                <li>{{ pack.words }}</li>
+            {% endif %}
+            {% if pack.image_zip_file %}
+                <li><a href='{{ media_url }}{{pack.image_zip_file}}'>{{ pack.image_zip_file }}</a></li>
+            {% endif %}
+            {% if pack.source_of_images %}
+                <li>{{ pack.source_of_images }}</li>
+            {% endif %}
+            </ul>
+ 
+        {% else %} 
+            <p>Pack not yet ready, it is being generated<p>
+            
+        {% endif %}
+        <p></p>
     </div>
 {% endfor %}
+
+<div class="pagination">
+    <span class="step-links">
+        {% if packs.has_previous %}
+            <a href="?page={{ packs.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ packs.number }} of {{ packs.paginator.num_pages }}.
+        </span>
+
+        {% if packs.has_next %}
+            <a href="?page={{ packs.next_page_number }}">next</a>
+        {% endif %}
+    </span>
+</div>
 
 {% endblock %}
 

@@ -2,12 +2,27 @@ from django.shortcuts import render
 from .models import Splendid
 from .forms import SplendidForm
 from django.shortcuts import redirect
+from django.conf import settings
+
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 # Create your views here.
 
 def pack_list(request):
-    packs = Splendid.objects.all()
-    return render(request, 'appsplendid/pack_list.html', {'packs': packs})
+    packs_list = Splendid.objects.all().reverse()
+
+    paginator = Paginator(packs_list, 2) # Show 2 contacts per page
+
+    page = request.GET.get('page')
+    try:
+        packs = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        packs = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        packs = paginator.page(paginator.num_pages)
+    return render(request, 'appsplendid/pack_list.html', {'packs': packs, 'media_url':settings.MEDIA_URL})
 
 def pack_new(request):
     if request.method == "POST":
@@ -18,3 +33,5 @@ def pack_new(request):
     else:
         form = SplendidForm()
     return render(request, 'appsplendid/pack_edit.html', {'form': form})
+
+
