@@ -63,6 +63,8 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'appsplendid',
     'bootstrap3',
+    'django.contrib.sites',
+    'django.contrib.flatpages'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -73,6 +75,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
 )
 
 ROOT_URLCONF = 'websplendid.urls'
@@ -108,3 +111,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 
 STATIC_URL = '/static/'
+SITE_ID = 1
+
