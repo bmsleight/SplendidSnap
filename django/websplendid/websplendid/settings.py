@@ -14,7 +14,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
 
 #Development
-MEDIA_ROOT = '/tmp/www/media/'
+MEDIA_ROOT = '/var/www/splendidsnap/media/'
 MEDIA_URL = '/media/'
 
 # Quick-start development settings - unsuitable for production

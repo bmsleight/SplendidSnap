@@ -7,6 +7,9 @@ For more information on this file, see
 https://docs.djangoproject.com/en/1.7/howto/deployment/wsgi/
 """
 
+import sys
+sys.path.append('/home/bms/SplendidSnap/django/websplendid/')
+
 import os
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "websplendid.settings")
 
