@@ -14,8 +14,11 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
 
 #Development
-MEDIA_ROOT = '/var/www/splendidsnap/media/'
+MEDIA_ROOT = '/var/www/splendidsnap.com/media/'
 MEDIA_URL = '/media/'
+STATIC_ROOT = '/var/www/splendidsnap.com/static/'
+STATIC_URL = '/static/'
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
