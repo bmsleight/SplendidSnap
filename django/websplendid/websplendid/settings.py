@@ -48,11 +48,11 @@ def find_or_create_secret_key():
 SECRET_KEY = find_or_create_secret_key()
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 TEMPLATE_DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*.splendidsnap.com', 'splendidsnap.com', 'www.splendidsnap.com',]
 
 
 # Application definition
