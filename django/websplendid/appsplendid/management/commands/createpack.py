@@ -48,8 +48,15 @@ class Command(BaseCommand):
                 text_images = text_images + free_images
                 # Add at start so they have to be included
                 images = free_images + images
-            if total_needed > len(images):
-                pass # Adds lots of not enough images - or random words ?
+            
+            num_images = len(images)
+            while total_needed > num_images:
+                tmp_list = []
+                tmp_list.append(str(num_images))
+                tmp_list_images = _libspendidsnap.list_of_images_from_text(tmp_list)
+                text_images = text_images + tmp_list_images
+                images = images + tmp_list_images 
+                num_images = len(images)
             real_pack = _libspendidsnap.Pack(images[:total_needed])
             for arrangement in arrangements:
                 real_pack.make_card(arrangement)
@@ -76,5 +83,12 @@ class Command(BaseCommand):
             tweet = pack.pack_name + ' by @' + pack.creator + ' Download the full pack - http://SplendidSnap.com/appsplendid (' + str(pack.id) + ')'
             print tweet, showcase
             _tweetss.tweet(showcase, tweet.decode("utf8"))
+       
+            # cleanup
+            _libspendidsnap.clean_up(real_pack.cards + real_pack.list_of_thumbs() + real_pack.images_filenames_list)
+            _libspendidsnap.clean_up(text_images)
+            if pack.image_zip_file:
+                shutil.rmtree(tmp_imagesdir)
+
 
 
