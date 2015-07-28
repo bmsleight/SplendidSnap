@@ -246,7 +246,7 @@ def random_font_path_text():
     font = []
     for path in paths:
         fonts = fonts + glob.glob(path)
-    return(random.choice(fonts))
+    return(random.choice(fonts)) 
 
 def text_as_image(width=300, height=300, text="Hello", filename="tmp.png"):
     with Image(width=width, height=height) as img:
@@ -404,6 +404,20 @@ def generate__a4_pdf_from_images_list(pdf_name="ss.pdf", images_filenames_list=[
                                   width=card_size_mm*mm, height=card_size_mm*mm, mask='auto')
                     index_images = index_images + 1
         simple_text_wrap(pdf, 5*mm, "<link href='http://SplendidSnap.com' color='blue'>Created at http://SplendidSnap.com</link>")
+        pdf.showPage()
+    # Backing
+    tf = tempfile.NamedTemporaryFile(delete=False, suffix="ssc.png")
+    with Image(width=300, height=300) as img:
+        font = Font(path="/usr/share/fonts/truetype/freefont/LiberationMono-Bold.ttf", color=Color('NavyBlue'))
+        img.caption('Splendid\nSnap\n.com', font=font, gravity='center')
+        img.save(filename=tf.name)
+        draw_grid_lines(pdf, total_card_size_mm, page_x, page_y, cards_x, page_margin_x, cards_y, page_margin_y)
+        for x in range(0,cards_x):
+            for y in range(0,cards_y):
+                x_pos = page_margin_x + (x * total_card_size_mm) + card_boarder_mm
+                y_pos = page_margin_y + (y * total_card_size_mm) + card_boarder_mm
+                pdf.drawImage(tf.name, x_pos*mm, y_pos*mm, 
+                              width=card_size_mm*mm, height=card_size_mm*mm, mask='auto')
         pdf.showPage()
     pdf.save()
 
